@@ -10,7 +10,7 @@ which are specified by https://www.nand2tetris.org/.
 
 If you wish to test the compiler, translator, or assembler yourself, you will (for now*) first need to update
 the abstract filepath used in each main method to locate your files.
-Mine looks like: "C:/Users/zergl/...
+Mine looks like: "C:/Users/zergl/... .
 For Windows Users, simply replace 'zergl' with your system username. For non-Windows users, idk that might still work.
 
 A "Hack" CPU emulator is included in the "tools" folder; simply run the CPUEmulator.bat file.
