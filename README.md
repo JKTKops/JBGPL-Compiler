@@ -16,7 +16,7 @@ For Windows Users, simply replace 'zergl' with your system username. For non-Win
 A "Hack" CPU emulator is included in the "tools" folder; simply run the CPUEmulator.bat file.
 You can load either Hack Assembly .asm or Hack Binary .hack files into the emulator, it runs both.
 
-DISCLAIMER: The entirety of the tools folder was copied directly from the nand2tetris Software Suite, which can be found at
+DISCLAIMER: The entirety of the tools folder was copied directly from the nand2tetris Software Suite, which can be found FOR FREE at
 https://www.nand2tetris.org/software. Other files which were included from the Software Suite contain a comment
 at the top which says so. These comments are unmodified. Files which do not contain these comments were either written,
 translated, or assembled by me.
