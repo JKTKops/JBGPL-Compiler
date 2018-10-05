@@ -6,10 +6,15 @@ The eventual goal is to compile .jbgpl files into MASM assembly files using, ide
   
 However, as I continue to learn about the compilation process, work out details, and clean up my code,
 the current version aims to compile from "Jack" to "Hack," a high-level and low-level language respectively
-which are specified by https://www.nand2tetris.org/. A "Hack" CPU emulator is included in the "tools" folder; simply
-run the CPUEmulator.bat file. You can load either Hack Assembly .asm or Hack Binary .hack files into the emulator, it runs both.
+which are specified by https://www.nand2tetris.org/.
 
-I apologize in advance for the regex that matches comments in the Tokenizer.
+If you wish to test the compiler, translator, or assembler yourself, you will (for now*) first need to update
+the abstract filepath used in each main method to locate your files.
+Mine looks like: "C:/Users/zergl/...
+For Windows Users, simply replace 'zergl' with your system username. For non-Windows users, idk that might still work.
+
+A "Hack" CPU emulator is included in the "tools" folder; simply run the CPUEmulator.bat file.
+You can load either Hack Assembly .asm or Hack Binary .hack files into the emulator, it runs both.
 
 DISCLAIMER: The entirety of the tools folder was copied directly from the nand2tetris Software Suite, which can be found at
 https://www.nand2tetris.org/software. Other files which were included from the Software Suite contain a comment
