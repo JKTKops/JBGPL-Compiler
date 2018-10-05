@@ -32,7 +32,7 @@ public class VMTranslator {
      * 2) The stacker used in calling functions
      * 3) The returner used by the return statement
      *
-     * @return Formatted assembly pre-application code.
+     * Adds formatted assembly pre-application code to the PrintWriter.
      */
     private void bootstrap() {
         String ret = "@255\nD=A\n@SP\nM=D\n@Sys.init\n0;JMP\n" + // bootstrapper
@@ -354,7 +354,7 @@ public class VMTranslator {
         Scanner sc = new Scanner(System.in);
         System.out.print("File or Dir?: ");
         directory = sc.nextLine().equalsIgnoreCase("dir");
-        String fileOrDirName = "C:/Users/zergl/IdeaProjects/Mack to Hack/src/files/";
+        String fileOrDirName = "C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/VM Files";
         System.out.print("Name of File or Directory (do not include .vm): ");
         String actualName = sc.nextLine();
         if (actualName.contains("/")) {

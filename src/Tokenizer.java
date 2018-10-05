@@ -8,7 +8,7 @@ public class Tokenizer {
         String fileText;
         StringBuilder sb = new StringBuilder();
         try{
-            br = new BufferedReader(new FileReader("C:/Users/zergl/IdeaProjects/Mack to Hack/src/files/Square/Square.jack"));
+            br = new BufferedReader(new FileReader("C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/Jack Files/Square/Square.jack"));
             String s;
             while ((s = br.readLine()) != null) {
                 sb.append(s);

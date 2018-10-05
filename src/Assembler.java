@@ -9,7 +9,7 @@ public class Assembler {
         String fileName = "";
         System.out.print("Filename of a .asm file (without .asm): ");
         Scanner sc = new Scanner(System.in);
-        fileName = "C:/Users/zergl/IdeaProjects/Mack to Hack/src/files/" +sc.nextLine();
+        fileName = "C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/" +sc.nextLine();
         File file = new File(fileName + ".asm");
         AsmParser parser = new AsmParser(file);
         try {
