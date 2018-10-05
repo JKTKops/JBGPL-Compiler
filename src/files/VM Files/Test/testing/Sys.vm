@@ -1,0 +1,25 @@
+// Sys file for this package
+
+function Sys.init 0
+call Main.main 0
+label WHILE
+goto WHILE
+
+function Sys.multiply 1
+label LOOP
+push argument 0
+push constant 0
+eq
+if-goto BREAK // break if arg0 == 0
+push argument 0
+push constant 1
+sub
+pop argument 0 // arg0--
+push argument 1
+push local 0
+add
+pop local 0 // local0+=arg1
+goto LOOP
+label BREAK
+push local 0
+return

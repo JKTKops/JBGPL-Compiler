@@ -1,0 +1,8 @@
+// Main for this testing package
+
+function Main.main 0
+push constant 3
+call Factorial.factorial 1
+pop temp 0
+push constant 0
+return

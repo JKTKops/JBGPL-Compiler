@@ -1,0 +1,25 @@
+// Simple class involved in a VM test
+// Max Kopinsky 10/3/2018
+
+function Factorial.factorial 0
+push argument 0
+push constant 1
+call Factorial.recur 2
+return
+
+function Factorial.recur 0 // recur(n, accumulator)
+push argument 0
+push constant 1
+eq
+if-goto IF_TRUE
+push argument 0
+push constant 1
+sub
+push argument 0
+push argument 1
+call Sys.multiply 2
+call Factorial.recur 2
+return
+label IF_TRUE
+push argument 1
+return
