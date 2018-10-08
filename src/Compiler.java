@@ -14,15 +14,20 @@ public class Compiler {
     }
 
     String compileClass() throws SyntaxException {
+        StringBuilder ret = new StringBuilder("<class>\n");
         if (!tokens[currentToken].equals("class")) {
             throw new SyntaxException(tokens, currentToken, "'class' expected");
-        } else if (!tokens[++currentToken].matches(CLASS_IDEN)) {
+        }
+        ret.append("<keyword> class </keyword>\n");
+        if (!tokens[++currentToken].matches(CLASS_IDEN)) {
             throw new SyntaxException(tokens, currentToken, "Class names must match " + CLASS_IDEN);
-        } else if (!tokens[++currentToken].equals("{")) {
+        }
+        ret.append("<identifier> ").append(tokens[currentToken]).append(" </identifier>\n");
+        if (!tokens[++currentToken].equals("{")) {
             throw new SyntaxException(tokens, currentToken, "'{' expected");
         }
+        ret.append("<symbol> { </symbol>\n");
 
-        StringBuilder ret = new StringBuilder("<class>\n");
         currentToken++;
         while (!tokens[currentToken].equals("}")) {
             boolean isStatic = tokens[currentToken].equals("static");
@@ -32,9 +37,10 @@ public class Compiler {
             if (!tokens[currentToken + 2].equals("(")) {
                 ret.append(compileClassVarDec(isStatic));
             } else {
-                //ret.append(compileSubroutineDec(isStatic));
+                ret.append(compileSubroutineDec(isStatic));
             }
         }
+        ret.append("<symbol> } </symbol>\n");
         ret.append("</class>");
         return ret.toString();
     }
@@ -46,21 +52,8 @@ public class Compiler {
             ret.append("<keyword> static </keyword>\n");
         }
 
-        String type = tokens[currentToken];
-        if (!(type.equals("int") || type.equals("char") || type.equals("bool") || type.matches(CLASS_IDEN))) {
-            throw new SyntaxException(tokens, currentToken, "Type expected.");
-        } else if (type.equals("int") || type.equals("char") || type.equals("bool")) {
-            ret.append("<keyword> ").append(type).append(" </keyword>\n");
-        } else {
-            ret.append("<identifier> ").append(type).append(" </identifier>\n");
-        }
-        currentToken++;
-
-        if (!(tokens[currentToken].matches(NORM_IDEN) && !keyword(tokens[currentToken]))) {
-            throw new SyntaxException(tokens, currentToken, "Identifier expected.");
-        }
-        ret.append("<identifier> ").append(tokens[currentToken]).append(" </identifier>\n");
-        currentToken++;
+        ret.append(compileType(false));
+        ret.append(compileNormIden());
 
         if (tokens[currentToken].equals("=")) {
             ret.append("<symbol> ; </symbol>\n</classVarDec>\n");
@@ -77,11 +70,7 @@ public class Compiler {
                 ret.append("<symbol> , </symbol>\n");
                 currentToken++;
 
-                if (!(tokens[currentToken].matches(NORM_IDEN) && !keyword(tokens[currentToken]))) {
-                    throw new SyntaxException(tokens, currentToken, "Identifier expected.");
-                }
-                ret.append("<identifier> ").append(tokens[currentToken]).append(" </identifier>\n");
-                currentToken++;
+                ret.append(compileNormIden());
             }
             ret.append("<symbol> ; </symbol>\n");
             ret.append("</classVarDec>\n");
@@ -92,48 +81,100 @@ public class Compiler {
 
     /** currentToken initially expects identifier */
     private String compileAssignment() throws SyntaxException {
-        if (!tokens[currentToken].matches(NORM_IDEN) || keyword(tokens[currentToken])) {
-            throw new SyntaxException(tokens, currentToken, "Identifier expected.");
-        }
         StringBuilder ret = new StringBuilder("<assignment>\n");
-        ret.append("<identifier> ").append(tokens[currentToken]).append(" </identifier>\n");
+        ret.append(compileNormIden());
         ret.append("<symbol> = </symbol>\n"); // only ever called if there's an = here so
-        currentToken += 2;
+        currentToken++;
         //ret.append(compileExpression());
         currentToken+=2; // compileExpression will advance past this when we write it
+
+        ret.append("</assignment>\n");
         return ret.toString();
     }
 
     /** currentToken initially expects type */
     private String compileSubroutineDec(boolean subStatic) throws SyntaxException {
-        StringBuilder ret = new StringBuilder();
+        StringBuilder ret = new StringBuilder("<subroutineDec>\n");
         if (subStatic) {
             ret.append("<keyword> static </keyword>\n");
         }
+        ret.append(compileType(true));
+        ret.append(compileNormIden());
+        ret.append(compileParameterList()); // advances past final )
+
+        if (!tokens[currentToken].equals("{")) {
+            throw new SyntaxException(tokens, currentToken, "{ expected.");
+        }
+        ret.append("<symbol> { </symbol>\n");
+        currentToken++;
+
+        while (!tokens[currentToken].equals("}")) {
+            //compileStatement();
+            currentToken++;
+        }
+        ret.append("<symbol> } </symbol>\n");
+        ret.append("</subroutineDec>\n");
+        currentToken++;
+        return ret.toString();
+    }
+
+    /** currentToken initially expects ( */
+    private String compileParameterList()  throws SyntaxException {
+        if (!tokens[currentToken].equals("(")) {
+            throw new SyntaxException(tokens, currentToken, "( expected.");
+        }
+        StringBuilder ret = new StringBuilder("<symbol> ( </symbol>\n");
+        ret.append("<parameterList>\n");
+        currentToken++;
+
+        while (!tokens[currentToken].equals(")")) {
+            ret.append(compileType(false));
+            ret.append(compileNormIden());
+            if (tokens[currentToken].equals(",")) {
+                ret.append("<symbol> , </symbol>\n");
+                currentToken++;
+                if (tokens[currentToken].equals(")")) {
+                    throw new SyntaxException(tokens, currentToken, "Variable type expected.");
+                }
+            } else if (!tokens[currentToken].equals(")")) {
+                throw new SyntaxException(tokens, currentToken, "Cannot resolve symbol, ')' expected.");
+            }
+        }
+
+        ret.append("</parameterList>\n");
+        ret.append("<symbol> ) </symbol>\n");
+        currentToken++;
+        return ret.toString();
+    }
+
+    /** currentToken expects type */
+    private String compileType(boolean subroutine) throws SyntaxException {
+        StringBuilder ret = new StringBuilder();
         String type = tokens[currentToken];
-        if (!(type.equals("int") || type.equals("char") || type.equals("bool") || type.equals("void") || type.matches(CLASS_IDEN))) {
-            throw new SyntaxException(tokens, currentToken, "Type expected.");
+        if (!(type.equals("int") || type.equals("char") || type.equals("bool") || type.matches(CLASS_IDEN))) {
+            if (!subroutine) {
+                throw new SyntaxException(tokens, currentToken, "Variable type expected.");
+            } else  if (!type.equals("void")) {
+                throw new SyntaxException(tokens, currentToken, "Type expected.");
+            }
         } else if (type.equals("int") || type.equals("char") || type.equals("bool") || type.equals("void")) {
             ret.append("<keyword> ").append(type).append(" </keyword>\n");
         } else {
             ret.append("<identifier> ").append(type).append(" </identifier>\n");
         }
         currentToken++;
-        ret.append(compileParameterList()); // advances past final )
-
-        if (!tokens[currentToken].equals("{")) {
-            throw new SyntaxException(tokens, currentToken, "{ expected.");
-        }
-        ret.append("<symbol> { </symbol>");
-        currentToken++;
-
-        while (!tokens[currentToken].equals("}")) {
-            compileStatement();
-        }
-        ret.append("<symbol> } </symbol>");
         return ret.toString();
     }
-
+    /** currentToken expects identifier */
+    private String compileNormIden() throws SyntaxException {
+        if (!tokens[currentToken].matches(NORM_IDEN)) {
+            throw new SyntaxException(tokens, currentToken, "Identifier expected.");
+        }
+        if (keyword(tokens[currentToken])) {
+            throw new SyntaxException(tokens, currentToken, "Keyword not allowed here.");
+        }
+        return "<identifier> " + tokens[currentToken++] + " </identifier>\n";
+    }
     /** for searching keywords */
     private boolean keyword(String token) {
         for (String s: keywords) {
