@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Compiler {
     private String[] tokens;
@@ -7,16 +8,29 @@ public class Compiler {
     private final String CLASS_IDEN = "[A-Z][_A-Za-z0-9]*";
     private final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
                                "false", "null", "this", "if", "else", "while", "for", "return", "new"};
-    private String[] classes;
+    private ArrayList<String> classes;
     private ArrayList<String> scopeVars = new ArrayList<>();
 
     Compiler(String[] t, String[] c) {
         tokens = t;
-        classes = c;
+        classes = new ArrayList<>(Arrays.asList(c));
     }
 
     String compileClass() throws SyntaxException {
-        StringBuilder ret = new StringBuilder("<class>\n");
+        StringBuilder ret = new StringBuilder();
+        /* this while loop needs to be fixed for later, if we want jbgpl.String rather than just String */
+        while (tokens[currentToken].equals("import")) {
+            ret.append("<importStatement>\n<identifier> ").append(tokens[++currentToken]).append(" </identifier>\n");
+            classes.add(tokens[currentToken]);
+            currentToken++;
+            if (!tokens[currentToken].equals(";")) {
+                throw new SyntaxException(tokens, currentToken, "; expected.");
+            }
+            ret.append("<symbol> ; </symbol>\n</importStatement>\n");
+            currentToken++;
+        }
+
+        ret.append("<class>\n");
         if (!tokens[currentToken].equals("class")) {
             throw new SyntaxException(tokens, currentToken, "'class' expected");
         }
@@ -145,7 +159,7 @@ public class Compiler {
     private String compileStatement() throws SyntaxException {
         switch (tokens[currentToken]) {
             case "while":
-                //return compileWhile();
+                return compileWhile();
             case "if":
                 //return compileIf();
             case "for":
@@ -156,7 +170,7 @@ public class Compiler {
             case "int":
             case "bool":
             case "char":
-                //return compileLocalVarDec();
+                return compileLocalVarDec();
             default:
                 if (tokens[currentToken + 1].equals("=")) {
                     //return compileAssignment();
@@ -164,6 +178,61 @@ public class Compiler {
                 //return compileCall();
         }
         throw new SyntaxException(tokens, currentToken, "Not a Statement.");
+    }
+
+    /** token initially expects 'while'
+     * Note there is indirect recursion between this method and compileStatement
+     */
+    private String compileWhile() throws SyntaxException {
+        StringBuilder ret = new StringBuilder("<whileStatement>\n<keyword> while </keyword>\n");
+        currentToken++;
+        if (!tokens[currentToken].equals("(")) {
+            throw new SyntaxException(tokens, currentToken, "( expected.");
+        }
+        ret.append("<symbol> ( </symbol>\n");
+        //ret.append(compileExpression());
+        ret.append("<symbol> ) </symbol>\n");
+
+        if (!tokens[currentToken].equals("{")) {
+            throw new SyntaxException(tokens, currentToken, "{ expected.");
+        }
+        ret.append("<symbol> { </symbol>\n");
+        currentToken++;
+        while (!tokens[currentToken].equals("}")) {
+            ret.append(compileStatement());
+        }
+        ret.append("<symbol> } </symbol>\n</whileStatement>\n");
+        return ret.toString();
+    }
+
+    /** currentToken initially expects type */
+    private String compileLocalVarDec() throws SyntaxException {
+        StringBuilder ret = new StringBuilder("<localVarDec>\n");
+        ret.append(compileType(false));
+        ret.append(compileNormIden());
+
+        if (tokens[currentToken].equals("=")) {
+            ret.append("<symbol> ; </symbol>\n</localVarDec>\n");
+            currentToken--;
+            ret.append(compileAssignment());
+        } else {
+            while (!tokens[currentToken].equals(";")) {
+                if (!tokens[currentToken].equals(",")) {
+                    if (tokens[currentToken].equals("=")) {
+                        throw new SyntaxException(tokens, currentToken, "Assignment not allowed in multiple declaration.");
+                    }
+                    throw new SyntaxException(tokens, currentToken, "',' expected.");
+                }
+                ret.append("<symbol> , </symbol>\n");
+                currentToken++;
+
+                ret.append(compileNormIden());
+            }
+            ret.append("<symbol> ; </symbol>\n");
+            ret.append("</localVarDec>\n");
+            currentToken++;
+        }
+        return ret.toString();
     }
 
     /** currentToken initially expects identifier */
@@ -183,7 +252,7 @@ public class Compiler {
     private String compileType(boolean subroutine) throws SyntaxException {
         StringBuilder ret = new StringBuilder();
         String type = tokens[currentToken];
-        if (!(type.equals("int") || type.equals("char") || type.equals("bool") || type.matches(CLASS_IDEN))) {
+        if (!(type.equals("int") || type.equals("char") || type.equals("bool") || validClass(type))) {
             if (!subroutine) {
                 throw new SyntaxException(tokens, currentToken, "Variable type expected.");
             } else  if (!type.equals("void")) {
