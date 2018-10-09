@@ -17,7 +17,7 @@ public class Compiler {
     }
 
     String compileClass() throws SyntaxException {
-        StringBuilder ret = new StringBuilder();
+        StringBuilder ret = new StringBuilder("<class>\n");
         /* this while loop needs to be fixed for later, if we want jbgpl.String rather than just String */
         while (tokens[currentToken].equals("import")) {
             ret.append("<importStatement>\n<identifier> ").append(tokens[++currentToken]).append(" </identifier>\n");
@@ -30,7 +30,6 @@ public class Compiler {
             currentToken++;
         }
 
-        ret.append("<class>\n");
         if (!tokens[currentToken].equals("class")) {
             throw new SyntaxException(tokens, currentToken, "'class' expected");
         }
@@ -157,25 +156,22 @@ public class Compiler {
 
     /** expects first token of statement */
     private String compileStatement() throws SyntaxException {
-        switch (tokens[currentToken]) {
-            case "while":
-                return compileWhile();
-            case "if":
-                //return compileIf();
-            case "for":
-                //return compileFor();
-            case "return":
-                //return compileReturn();
-                break;
-            case "int":
-            case "bool":
-            case "char":
-                return compileLocalVarDec();
-            default:
-                if (tokens[currentToken + 1].equals("=")) {
-                    //return compileAssignment();
-                }
-                //return compileCall();
+        if (tokens[currentToken].equals("while")) {
+            return compileWhile();
+        } else if (tokens[currentToken].equals("if")) {
+            //return compileIf();
+        } else if (tokens[currentToken].equals("for")) {
+            //return compileFor();
+        } else if (tokens[currentToken].equals("return")) {
+            //return compileReturn();
+        } else if (tokens[currentToken].equals("int") || tokens[currentToken].equals("bool")
+                || tokens[currentToken].equals("char") || (validClass(tokens[currentToken]) && !tokens[currentToken + 1].equals("."))) {
+            return compileLocalVarDec();
+        } else {
+            if (tokens[currentToken + 1].equals("=")) {
+                //return compileAssignment();
+            }
+            //return compileCall();
         }
         throw new SyntaxException(tokens, currentToken, "Not a Statement.");
     }
@@ -191,6 +187,7 @@ public class Compiler {
         }
         ret.append("<symbol> ( </symbol>\n");
         //ret.append(compileExpression());
+        currentToken += 2; // compileExpression() will advance past this
         ret.append("<symbol> ) </symbol>\n");
 
         if (!tokens[currentToken].equals("{")) {
