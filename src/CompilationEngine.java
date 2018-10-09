@@ -1,11 +1,30 @@
 import java.io.File;
-
+import java.util.ArrayList;
 public class CompilationEngine {
-    public static void main(String[] args) {
-        File f = new File("C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/Jack Files/Test/Test.jbgpl");
-        String[] tokens = Tokenizer.tokenize(f);
+    static ArrayList<String> definedMethods = new ArrayList<>();
+    static ArrayList<String> calledMethods = new ArrayList<>();
 
-        Compiler comp = new Compiler(tokens);
+    private static String[] classFinder(String dirName){
+        File dir = new File(dirName);
+        File[] files = dir.listFiles((dir1, filename) -> filename.endsWith(".jbgpl"));
+        if (files == null) {
+            return new String[0];
+        }
+        String[] ret = new String[files.length];
+        for (int i = 0; i < ret.length; i++) {
+            String temp = files[i].getName();
+            ret[i] = temp.substring(0, temp.indexOf("."));
+        }
+        return ret;
+    }
+
+    public static void main(String[] args) {
+        String dirPath = "C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/Jack Files/Test";
+        File f = new File(dirPath + "/Test.jbgpl");
+        String[] tokens = Tokenizer.tokenize(f);
+        String[] classes = CompilationEngine.classFinder(dirPath);
+
+        Compiler comp = new Compiler(tokens, classes);
         String out = "";
         try {
             out = comp.compileClass();

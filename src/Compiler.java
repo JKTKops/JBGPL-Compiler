@@ -4,13 +4,15 @@ public class Compiler {
     private String[] tokens;
     private int currentToken = 0;
     private final String NORM_IDEN = "[a-z][_A-Za-z0-9]*";
-    final String CLASS_IDEN = "[A-Z][_A-Za-z0-9]*";
-    final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
+    private final String CLASS_IDEN = "[A-Z][_A-Za-z0-9]*";
+    private final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
                                "false", "null", "this", "if", "else", "while", "for", "return", "new"};
-    ArrayList<String> scopeVars = new ArrayList<>();
+    private String[] classes;
+    private ArrayList<String> scopeVars = new ArrayList<>();
 
-    Compiler(String[] t) {
+    Compiler(String[] t, String[] c) {
         tokens = t;
+        classes = c;
     }
 
     String compileClass() throws SyntaxException {
@@ -21,6 +23,9 @@ public class Compiler {
         ret.append("<keyword> class </keyword>\n");
         if (!tokens[++currentToken].matches(CLASS_IDEN)) {
             throw new SyntaxException(tokens, currentToken, "Class names must match " + CLASS_IDEN);
+        } else if (!validClass(tokens[currentToken])) {
+            String temp = "Class " + tokens[currentToken] + " must be in a file named " + tokens[currentToken] + ".jbgpl";
+            throw new SyntaxException(tokens, currentToken, temp);
         }
         ret.append("<identifier> ").append(tokens[currentToken]).append(" </identifier>\n");
         if (!tokens[++currentToken].equals("{")) {
@@ -79,19 +84,6 @@ public class Compiler {
         return ret.toString();
     }
 
-    /** currentToken initially expects identifier */
-    private String compileAssignment() throws SyntaxException {
-        StringBuilder ret = new StringBuilder("<assignment>\n");
-        ret.append(compileNormIden());
-        ret.append("<symbol> = </symbol>\n"); // only ever called if there's an = here so
-        currentToken++;
-        //ret.append(compileExpression());
-        currentToken+=2; // compileExpression will advance past this when we write it
-
-        ret.append("</assignment>\n");
-        return ret.toString();
-    }
-
     /** currentToken initially expects type */
     private String compileSubroutineDec(boolean subStatic) throws SyntaxException {
         StringBuilder ret = new StringBuilder("<subroutineDec>\n");
@@ -100,18 +92,20 @@ public class Compiler {
         }
         ret.append(compileType(true));
         ret.append(compileNormIden());
+        CompilationEngine.definedMethods.add(tokens[currentToken - 1]);
         ret.append(compileParameterList()); // advances past final )
 
         if (!tokens[currentToken].equals("{")) {
             throw new SyntaxException(tokens, currentToken, "{ expected.");
         }
         ret.append("<symbol> { </symbol>\n");
+        ret.append("<subroutineBody>\n");
         currentToken++;
 
         while (!tokens[currentToken].equals("}")) {
-            //compileStatement();
-            currentToken++;
+            ret.append(compileStatement());
         }
+        ret.append("</subroutineBody>\n");
         ret.append("<symbol> } </symbol>\n");
         ret.append("</subroutineDec>\n");
         currentToken++;
@@ -147,6 +141,44 @@ public class Compiler {
         return ret.toString();
     }
 
+    /** expects first token of statement */
+    private String compileStatement() throws SyntaxException {
+        switch (tokens[currentToken]) {
+            case "while":
+                //return compileWhile();
+            case "if":
+                //return compileIf();
+            case "for":
+                //return compileFor();
+            case "return":
+                //return compileReturn();
+                break;
+            case "int":
+            case "bool":
+            case "char":
+                //return compileLocalVarDec();
+            default:
+                if (tokens[currentToken + 1].equals("=")) {
+                    //return compileAssignment();
+                }
+                //return compileCall();
+        }
+        throw new SyntaxException(tokens, currentToken, "Not a Statement.");
+    }
+
+    /** currentToken initially expects identifier */
+    private String compileAssignment() throws SyntaxException {
+        StringBuilder ret = new StringBuilder("<assignment>\n");
+        ret.append(compileNormIden());
+        ret.append("<symbol> = </symbol>\n"); // only ever called if there's an = here so
+        currentToken++;
+        //ret.append(compileExpression());
+        currentToken+=2; // compileExpression will advance past this when we write it
+
+        ret.append("</assignment>\n");
+        return ret.toString();
+    }
+
     /** currentToken expects type */
     private String compileType(boolean subroutine) throws SyntaxException {
         StringBuilder ret = new StringBuilder();
@@ -179,6 +211,15 @@ public class Compiler {
     private boolean keyword(String token) {
         for (String s: keywords) {
             if (token.equals(s)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /** for searching the list of classes */
+    private boolean validClass(String potentialClass) {
+        for (String s: classes) {
+            if (s.equals(potentialClass)) {
                 return true;
             }
         }

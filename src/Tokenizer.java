@@ -3,11 +3,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.regex.Pattern;
 
 class Tokenizer {
-    //HashMap<String, Method> methodTypes = new HashMap<>();
 
     static String[] tokenize(File file) {
         BufferedReader br;
@@ -47,8 +45,4 @@ class Tokenizer {
 
         return tokens.toArray(new String[0]);
     }
-
-    // eventually add a getMethodDetails method which takes a method name and returns a
-    // list of Method objects with the method name, return type, parameter list length,
-    // and parameter list types. Used to determine if there is a syntax error in a call.
 }
