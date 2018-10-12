@@ -1,36 +1,25 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
 public class TreeBuilder {
+    private Compiler parent;
     private String[] tokens;
-    private int currentToken = 0;
+    private int currentToken;
     private final String NORM_IDEN = "[a-z][_A-Za-z0-9]*";
     private final String CLASS_IDEN = "[A-Z][_A-Za-z0-9]*";
     private final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
                                "false", "null", "this", "if", "else", "while", "for", "return", "new"};
-    private ArrayList<String> classes;
-    private VarStack scopeVars = new VarStack();
+    private VarStack scopeVars;
 
-    TreeBuilder(String[] t, String[] c) {
+    TreeBuilder(String[] t, Compiler c) {
+        parent = c;
         tokens = t;
-        classes = new ArrayList<>(Arrays.asList(c));
+        scopeVars = new VarStack();
+        currentToken = 0;
+        while (!tokens[currentToken].equals("class")) {
+            currentToken++;
+        }
     }
 
     String classTree() throws SyntaxException {
         StringBuilder ret = new StringBuilder("<class>\n");
-        /* this while loop needs to be fixed for later, if we want jbgpl.String rather than just String */
-        while (tokens[currentToken].equals("import")) {
-            ret.append("<importStatement>\n<identifier> ").append(tokens[++currentToken]).append(" </identifier>\n");
-            classes.add(tokens[currentToken]);
-            currentToken++;
-            if (!tokens[currentToken].equals(";")) {
-                throw new SyntaxException(tokens, currentToken, "; expected.");
-            }
-            ret.append("<symbol> ; </symbol>\n</importStatement>\n");
-            currentToken++;
-        }
-
         if (!tokens[currentToken].equals("class")) {
             throw new SyntaxException(tokens, currentToken, "'class' expected");
         }
@@ -106,7 +95,6 @@ public class TreeBuilder {
         }
         ret.append(varTypeTree(true));
         ret.append(normIdenTree());
-        Compiler.definedMethods.add(tokens[currentToken - 1]);
         ret.append(parameterListTree()); // advances past final )
 
         if (!tokens[currentToken].equals("{")) {
@@ -333,7 +321,7 @@ public class TreeBuilder {
     }
     /** for searching the list of classes */
     private boolean validClass(String potentialClass) {
-        for (String s: classes) {
+        for (String s: parent.getClasses()) {
             if (s.equals(potentialClass)) {
                 return true;
             }
