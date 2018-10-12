@@ -22,5 +22,5 @@ if not "%~1"=="" (
 pushd "%~dp0"
 echo Compiling "%_arg1%"
 java -classpath "%CLASSPATH%;bin/classes;bin/lib/Hack.jar;bin/lib/Compilers.jar" ^
-  Hack.Compiler.JackCompiler "%_arg1%"
+  Hack.TreeBuilder.JackCompiler "%_arg1%"
 popd

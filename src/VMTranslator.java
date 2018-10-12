@@ -354,7 +354,7 @@ public class VMTranslator {
         Scanner sc = new Scanner(System.in);
         System.out.print("File or Dir?: ");
         directory = sc.nextLine().equalsIgnoreCase("dir");
-        String fileOrDirName = "C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/VM Files";
+        String fileOrDirName = "C:/Users/zergl/IdeaProjects/JBGPL TreeBuilder/src/files/VM Files";
         System.out.print("Name of File or Directory (do not include .vm): ");
         String actualName = sc.nextLine();
         if (actualName.contains("/")) {

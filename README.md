@@ -1,4 +1,4 @@
-# JBGPL-Compiler
+# JBGPL-TreeBuilder
 A compiler for a potentially long-term project of mine, a "Java-Based General Purpose Language."
 
 The eventual goal is to compile .jbgpl files into MASM assembly files using, ideally, the .386 instruction set.
