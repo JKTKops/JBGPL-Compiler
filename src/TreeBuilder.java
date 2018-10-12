@@ -10,7 +10,7 @@ public class TreeBuilder {
     private final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
                                "false", "null", "this", "if", "else", "while", "for", "return", "new"};
     private ArrayList<String> classes;
-    private HashMap<String, String> scopeVars = new HashMap<>();
+    private VarStack scopeVars = new VarStack();
 
     TreeBuilder(String[] t, String[] c) {
         tokens = t;
