@@ -8,7 +8,7 @@ class AsmParser {
     private static String line;
 
     AsmParser(File file) {
-        try{
+        try {
             br = new BufferedReader(new FileReader(file));
         } catch (Exception e) {
             System.out.println("The file could not be opened.\n" + e);
@@ -47,7 +47,7 @@ class AsmParser {
     }
 
     String commandType() {
-        if (line.substring(0,1).equals("@")) {
+        if (line.substring(0, 1).equals("@")) {
             return "A_COMMAND";
         } else if (line.matches("[ADM]{0,3}((=.+)|(.+;)).{0,3}")) {
             return "C_COMMAND";
@@ -55,7 +55,7 @@ class AsmParser {
         return "L_COMMAND";
     }
 
-    String symbol () {
+    String symbol() {
         switch (commandType()) {
             case "C_COMMAND":  // this should never be called
                 return "Something has gone horribly wrong.";
@@ -72,7 +72,7 @@ class AsmParser {
         }
         int ind = line.indexOf("=");
         if (ind > 0) {
-            return line.substring(0,ind);
+            return line.substring(0, ind);
         } else {
             return "";
         }

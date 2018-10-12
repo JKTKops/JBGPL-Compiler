@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class Compiler {
     private String[] tokens;
@@ -9,7 +10,7 @@ public class Compiler {
     private final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
                                "false", "null", "this", "if", "else", "while", "for", "return", "new"};
     private ArrayList<String> classes;
-    private ArrayList<String> scopeVars = new ArrayList<>();
+    private HashMap<String, String> scopeVars = new HashMap<>();
 
     Compiler(String[] t, String[] c) {
         tokens = t;
@@ -159,7 +160,7 @@ public class Compiler {
         if (tokens[currentToken].equals("while")) {
             return compileWhile();
         } else if (tokens[currentToken].equals("if")) {
-            //return compileIf();
+            return compileIfElseIfBlock();
         } else if (tokens[currentToken].equals("for")) {
             //return compileFor();
         } else if (tokens[currentToken].equals("return")) {
@@ -190,15 +191,61 @@ public class Compiler {
         currentToken += 2; // compileExpression() will advance past this
         ret.append("<symbol> ) </symbol>\n");
 
+        ret.append(compileStatements());
+        ret.append("</whileStatement>\n");
+        return ret.toString();
+    }
+
+    private String compileIfElseIfBlock() throws SyntaxException {
+        StringBuilder ret = new StringBuilder("<ifStatement>\n<keyword> if </keyword>");
+        currentToken++;
+        ret.append(compileIf());
+
+        boolean finalElse = false;
+        while (tokens[currentToken].equals("else") && !finalElse) {
+            currentToken++;
+            if (tokens[currentToken].equals("if")) {
+                ret.append("<keyword> else if </keyword>\n");
+                currentToken++;
+                ret.append(compileIf());
+            } else {
+                ret.append("<keyword> else </keyword>\n");
+                ret.append(compileStatements());
+                finalElse = true;
+            }
+        }
+
+        ret.append("</ifStatement>\n");
+        return ret.toString();
+    }
+
+    /** currentToken initially expects ( */
+    private String compileIf() throws SyntaxException {
+        StringBuilder ret = new StringBuilder();
+        if (!tokens[currentToken].equals("(")) {
+            throw new SyntaxException(tokens, currentToken, "( expected.");
+        }
+        ret.append("<symbol> ( </symbol>\n");
+        //ret.append(compileExpression());
+        currentToken += 2; // compileExpression() will advance past this
+        ret.append("<symbol> ) </symbol>\n");
+        ret.append(compileStatements());
+        return ret.toString();
+    }
+
+    /** currentToken initially expects { */
+    private String compileStatements() throws SyntaxException {
+        StringBuilder ret = new StringBuilder();
         if (!tokens[currentToken].equals("{")) {
-            throw new SyntaxException(tokens, currentToken, "{ expected.");
+            throw new SyntaxException(tokens, currentToken, "( expected.");
         }
         ret.append("<symbol> { </symbol>\n");
         currentToken++;
         while (!tokens[currentToken].equals("}")) {
             ret.append(compileStatement());
         }
-        ret.append("<symbol> } </symbol>\n</whileStatement>\n");
+        ret.append("<symbol> } </symbol>\n");
+        currentToken++;
         return ret.toString();
     }
 
