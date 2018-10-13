@@ -5,12 +5,11 @@ import java.util.HashMap;
 
 public class Compiler {
     private HashMap<String, String> methodTypes = new HashMap<>();
-    private String[] fileNames;
     private ArrayList<String> classes;
     private String[][] tokens;
 
     Compiler(String dirName) throws SyntaxException {
-        fileNames = classFinder(dirName);
+        String[] fileNames = classFinder(dirName);
         tokens = new String[fileNames.length][];
         for (int i = 0; i < tokens.length; i++) {
             tokens[i] = Tokenizer.tokenize(new File(dirName + "/" + fileNames[i]));
@@ -100,6 +99,7 @@ public class Compiler {
         try {
             Compiler compiler = new Compiler(dirPath);
             out = compiler.compile();
+            System.out.println("done");
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Reached end of file while parsing.");
         } catch (SyntaxException e) {

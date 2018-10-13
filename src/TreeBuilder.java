@@ -60,7 +60,12 @@ public class TreeBuilder {
             ret.append("<keyword> static </keyword>\n");
         }
 
+        String type = tokens[currentToken];
         ret.append(varTypeTree(false));
+        if (scopeVars.scopeContains(tokens[currentToken])) {
+            throw new SyntaxException(tokens, currentToken, "Identifier already defined in scope.");
+        }
+        scopeVars.addVar(tokens[currentToken], type);
         ret.append(normIdenTree());
 
         if (tokens[currentToken].equals("=")) {
@@ -78,6 +83,10 @@ public class TreeBuilder {
                 ret.append("<symbol> , </symbol>\n");
                 currentToken++;
 
+                if (scopeVars.scopeContains(tokens[currentToken])) {
+                    throw new SyntaxException(tokens, currentToken, "Identifier already defined in scope.");
+                }
+                scopeVars.addVar(tokens[currentToken], type);
                 ret.append(normIdenTree());
             }
             ret.append("<symbol> ; </symbol>\n");
@@ -103,10 +112,12 @@ public class TreeBuilder {
         ret.append("<symbol> { </symbol>\n");
         ret.append("<subroutineBody>\n");
         currentToken++;
+        scopeVars.downScope();
 
         while (!tokens[currentToken].equals("}")) {
             ret.append(statementTree());
         }
+        scopeVars.upScope();
         ret.append("</subroutineBody>\n");
         ret.append("<symbol> } </symbol>\n");
         ret.append("</subroutineDec>\n");
@@ -225,9 +236,10 @@ public class TreeBuilder {
 
     /** currentToken initially expects { */
     private String blockBodyTree() throws SyntaxException {
+        scopeVars.downScope();
         StringBuilder ret = new StringBuilder();
         if (!tokens[currentToken].equals("{")) {
-            throw new SyntaxException(tokens, currentToken, "( expected.");
+            throw new SyntaxException(tokens, currentToken, "{ expected.");
         }
         ret.append("<symbol> { </symbol>\n");
         currentToken++;
@@ -236,13 +248,20 @@ public class TreeBuilder {
         }
         ret.append("<symbol> } </symbol>\n");
         currentToken++;
+        scopeVars.upScope();
         return ret.toString();
     }
 
     /** currentToken initially expects type */
     private String localVarDecTree() throws SyntaxException {
         StringBuilder ret = new StringBuilder("<localVarDec>\n");
+
+        String type = tokens[currentToken];
         ret.append(varTypeTree(false));
+        if (scopeVars.scopeContains(tokens[currentToken])) {
+            throw new SyntaxException(tokens, currentToken, "Identifier already defined in scope.");
+        }
+        scopeVars.addVar(tokens[currentToken], type);
         ret.append(normIdenTree());
 
         if (tokens[currentToken].equals("=")) {
@@ -260,6 +279,10 @@ public class TreeBuilder {
                 ret.append("<symbol> , </symbol>\n");
                 currentToken++;
 
+                if (scopeVars.scopeContains(tokens[currentToken])) {
+                    throw new SyntaxException(tokens, currentToken, "Identifier already defined in scope.");
+                }
+                scopeVars.addVar(tokens[currentToken], type);
                 ret.append(normIdenTree());
             }
             ret.append("<symbol> ; </symbol>\n");

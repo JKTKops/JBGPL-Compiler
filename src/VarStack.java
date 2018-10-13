@@ -29,14 +29,31 @@ class VarStack {
     }
 
     boolean scopeContains(String identifier) {
-        return topNode.localVars.containsKey(identifier);
+        boolean found = false;
+        Node traverser = topNode;
+        while (traverser != null) {
+            if (traverser.localVars.containsKey(identifier)) {
+                found = true;
+                break;
+            }
+            traverser = traverser.nextNode;
+        }
+        return found;
     }
 
     boolean scopeContains(String identifier, String type) {
-        if (!topNode.localVars.containsKey(identifier)) {
-            return false;
+        boolean found = false;
+        Node traverser = topNode;
+        while (traverser != null) {
+            if (traverser.localVars.containsKey(identifier)) {
+                if (traverser.localVars.get(identifier).equals(type)) {
+                    found = true;
+                    break;
+                }
+            }
+            traverser = traverser.nextNode;
         }
-        return !topNode.localVars.get(identifier).equals(type);
+        return found;
     }
 
     private class Node {
@@ -49,6 +66,7 @@ class VarStack {
         }
 
         private Node(Node next) {
+            localVars = new HashMap<>();
             nextNode = next;
         }
 
