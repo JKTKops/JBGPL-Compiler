@@ -56,6 +56,17 @@ class VarStack {
         return found;
     }
 
+    String getType(String identifier) {
+        Node traverser = topNode;
+        while (traverser != null) {
+            if (traverser.localVars.containsKey(identifier)) {
+                return traverser.localVars.get(identifier);
+            }
+            traverser = traverser.nextNode;
+        }
+        return "Identifier not found";
+    }
+
     private class Node {
         private HashMap<String, String> localVars;
         private Node nextNode;

@@ -1,5 +1,6 @@
 public class TreeBuilder {
     private Compiler parent;
+    private String className = "";
     private String[] tokens;
     private int currentToken;
     private final String NORM_IDEN = "[a-z][_A-Za-z0-9]*";
@@ -7,6 +8,7 @@ public class TreeBuilder {
     private final String[] keywords = {"class", "static", "int", "char", "bool", "void", "true",
                                "false", "null", "this", "if", "else", "while", "for", "return", "new"};
     private VarStack scopeVars;
+    private String currentMethod = "";
 
     TreeBuilder(String[] t, Compiler c) {
         parent = c;
@@ -30,6 +32,7 @@ public class TreeBuilder {
             String temp = "Class " + tokens[currentToken] + " must be in a file named " + tokens[currentToken] + ".jbgpl";
             throw new SyntaxException(tokens, currentToken, temp);
         }
+        className = tokens[currentToken];
         ret.append("<identifier> ").append(tokens[currentToken]).append(" </identifier>\n");
         if (!tokens[++currentToken].equals("{")) {
             throw new SyntaxException(tokens, currentToken, "'{' expected");
@@ -38,7 +41,12 @@ public class TreeBuilder {
 
         currentToken++;
         while (!tokens[currentToken].equals("}")) {
-            boolean isStatic = tokens[currentToken].equals("static");
+            String token = tokens[currentToken];
+            if (!(token.equals("int") || token.equals("bool") || token.equals("char") || token.equals("void")
+                  || token.equals("static") || validClass(token))) {
+                throw new SyntaxException(tokens, currentToken, "Class variable or method declaration expected.");
+            }
+            boolean isStatic = token.equals("static");
             if (isStatic) {
                 currentToken++;
             }
@@ -103,7 +111,10 @@ public class TreeBuilder {
             ret.append("<keyword> static </keyword>\n");
         }
         ret.append(varTypeTree(true));
+        currentMethod = tokens[currentToken];
         ret.append(normIdenTree());
+
+        scopeVars.downScope();
         ret.append(parameterListTree()); // advances past final )
 
         if (!tokens[currentToken].equals("{")) {
@@ -112,16 +123,27 @@ public class TreeBuilder {
         ret.append("<symbol> { </symbol>\n");
         ret.append("<subroutineBody>\n");
         currentToken++;
-        scopeVars.downScope();
 
-        while (!tokens[currentToken].equals("}")) {
+        boolean hasReturn = false;
+        while (!tokens[currentToken].equals("}") && !hasReturn) {
+            if (tokens[currentToken].equals("return")) {
+                hasReturn = true;
+            }
             ret.append(statementTree());
         }
+        if (hasReturn && !tokens[currentToken].equals("}")) {
+            throw new SyntaxException(tokens, currentToken, "Unreachable statement.");
+        }
+        if (!(hasReturn || parent.getMethods().get(currentMethod).equals("void"))) {
+            throw new SyntaxException(tokens, currentToken, "Return statement required.");
+        }
+
         scopeVars.upScope();
         ret.append("</subroutineBody>\n");
         ret.append("<symbol> } </symbol>\n");
         ret.append("</subroutineDec>\n");
         currentToken++;
+        currentMethod = "";
         return ret.toString();
     }
 
@@ -136,6 +158,10 @@ public class TreeBuilder {
 
         while (!tokens[currentToken].equals(")")) {
             ret.append(varTypeTree(false));
+            if (scopeVars.scopeContains(tokens[currentToken])) {
+                throw new SyntaxException(tokens, currentToken, "Identifier already defined in scope.");
+            }
+            scopeVars.addVar(tokens[currentToken], tokens[currentToken - 1]);
             ret.append(normIdenTree());
             if (tokens[currentToken].equals(",")) {
                 ret.append("<symbol> , </symbol>\n");
@@ -163,7 +189,7 @@ public class TreeBuilder {
         } else if (tokens[currentToken].equals("for")) {
             //return compileFor();
         } else if (tokens[currentToken].equals("return")) {
-            //return compileReturn();
+            return returnTree();
         } else if (tokens[currentToken].equals("int") || tokens[currentToken].equals("bool")
                 || tokens[currentToken].equals("char") || (validClass(tokens[currentToken]) && !tokens[currentToken + 1].equals("."))) {
             return localVarDecTree();
@@ -173,7 +199,7 @@ public class TreeBuilder {
             } else if (tokens[currentToken].equals("else")) {
                 throw new SyntaxException(tokens, currentToken, "Else without if.");
             }
-            //return compileCall();
+            //return callTree();
         }
         throw new SyntaxException(tokens, currentToken, "Not a Statement.");
     }
@@ -188,8 +214,8 @@ public class TreeBuilder {
             throw new SyntaxException(tokens, currentToken, "( expected.");
         }
         ret.append("<symbol> ( </symbol>\n");
-        //ret.append(compileExpression());
-        currentToken += 2; // compileExpression() will advance past this
+        //ret.append(expressionTree());
+        currentToken += 2; // expressionTree() will advance past this
         ret.append("<symbol> ) </symbol>\n");
 
         ret.append(blockBodyTree());
@@ -227,8 +253,8 @@ public class TreeBuilder {
             throw new SyntaxException(tokens, currentToken, "( expected.");
         }
         ret.append("<symbol> ( </symbol>\n");
-        //ret.append(compileExpression());
-        currentToken += 2; // compileExpression() will advance past this
+        //ret.append(expressionTree());
+        currentToken += 2; // expressionTree() will advance past this
         ret.append("<symbol> ) </symbol>\n");
         ret.append(blockBodyTree());
         return ret.toString();
@@ -249,6 +275,24 @@ public class TreeBuilder {
         ret.append("<symbol> } </symbol>\n");
         currentToken++;
         scopeVars.upScope();
+        return ret.toString();
+    }
+
+    /** currentToken initially expects "return" */
+    private String returnTree() throws SyntaxException {
+        if (currentMethod.equals("")) {
+            throw new SyntaxException(tokens, currentToken, "Return statement outside method.");
+        }
+        StringBuilder ret = new StringBuilder("<returnStatement>\n<keyword> return </keyword>\n");
+        currentToken++;
+        //ret.append(expressionTree(parent.getMethods().get(currentMethod)));
+        currentToken ++;
+        if (!tokens[currentToken].equals(";")) {
+            throw new SyntaxException(tokens, currentToken, "; expected.");
+        }
+        ret.append("<symbol> ; </symbol>\n");
+        ret.append("</returnStatement>\n");
+        currentToken++;
         return ret.toString();
     }
 
@@ -295,11 +339,16 @@ public class TreeBuilder {
     /** currentToken initially expects identifier */
     private String assignmentTree() throws SyntaxException {
         StringBuilder ret = new StringBuilder("<assignment>\n");
+        String type = scopeVars.getType(tokens[currentToken]);
+        if (type.equals("Identifier not found.")) {
+            throw new SyntaxException(tokens, currentToken, type);
+        }
         ret.append(normIdenTree());
+
         ret.append("<symbol> = </symbol>\n"); // only ever called if there's an = here so
         currentToken++;
-        //ret.append(compileExpression());
-        currentToken+=2; // compileExpression will advance past this when we write it
+        //ret.append(expressionTree(type));
+        currentToken+=2; // expressionTree will advance past this when we write it
 
         ret.append("</assignment>\n");
         return ret.toString();

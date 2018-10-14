@@ -29,6 +29,7 @@ public class Compiler {
                 }
                 classes.add(token[j]);
                 j++;
+                // also get that class from the OS files and copy it into this dir
             }
             findMethods(token);
         }
