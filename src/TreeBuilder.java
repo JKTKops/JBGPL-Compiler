@@ -145,7 +145,7 @@ public class TreeBuilder {
         if (hasReturn && !tokens[currentToken].equals("}")) {
             throw new SyntaxException(tokens, currentToken, "Unreachable statement.");
         }
-        if (!(hasReturn || parent.getMethods().get(currentMethod).equals("void"))) {
+        if (!(hasReturn || parent.getMethods().get(currentMethod)[0].equals("void"))) {
             throw new SyntaxException(tokens, currentToken, "Return statement required.");
         }
 
@@ -172,7 +172,11 @@ public class TreeBuilder {
             if (scopeVars.scopeContains(tokens[currentToken])) {
                 throw new SyntaxException(tokens, currentToken, "Identifier already defined in scope.");
             }
-            scopeVars.addVar(tokens[currentToken], tokens[currentToken - 1]);
+            if (!tokens[currentToken - 1].equals("]")) {
+                scopeVars.addVar(tokens[currentToken], tokens[currentToken - 1]);
+            } else {
+                scopeVars.addVar(tokens[currentToken], tokens[currentToken-3] + "[]");
+            }
             ret.append(normIdenTree());
             if (tokens[currentToken].equals(",")) {
                 ret.append("<symbol> , </symbol>\n");
