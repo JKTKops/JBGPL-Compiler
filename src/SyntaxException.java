@@ -1,4 +1,4 @@
-public class SyntaxException extends Exception {
+public class SyntaxException extends Throwable {
     private String error;
 
     SyntaxException(String[] tokens, int currentToken, String error) {
