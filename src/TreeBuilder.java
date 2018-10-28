@@ -44,17 +44,16 @@ public class TreeBuilder {
             String token = tokens[currentToken];
             if (!(token.equals("int") || token.equals("bool") || token.equals("char") || token.equals("void")
                   || token.equals("static") || validClass(token))) {
-                System.out.println(ret);
                 throw new SyntaxException(tokens, currentToken, "Class variable or method declaration expected.");
             }
             boolean isStatic = token.equals("static");
             if (isStatic) {
                 currentToken++;
             }
-            if (!tokens[currentToken + 2].equals("(")) {
-                ret.append(classVarDecTree(isStatic));
-            } else {
+            if (tokens[currentToken + 2].equals("(") || tokens[currentToken + 1].equals("(")) {
                 ret.append(subroutineDecTree(isStatic));
+            } else {
+                ret.append(classVarDecTree(isStatic));
             }
         }
         ret.append("<symbol> } </symbol>\n");
@@ -121,9 +120,30 @@ public class TreeBuilder {
         if (subStatic) {
             ret.append("<keyword> static </keyword>\n");
         }
+
+        boolean constructor = false;
+        if (tokens[currentToken + 1].equals("(")) { // constructor
+            if (!tokens[currentToken].equals(className)) {
+                throw new SyntaxException(tokens, currentToken, "Constructors must have the same name as the class.");
+            }
+            if (subStatic) {
+                throw new SyntaxException(tokens, currentToken, "Constructors cannot be static.");
+            }
+            ret.append("<keyword> constructor </keyword>\n");
+            constructor = true;
+        }
         ret.append(varTypeTree(true));
+
+        if (constructor) {
+            currentToken--;
+        }
         currentMethod = tokens[currentToken];
-        ret.append(normIdenTree());
+        if (!constructor) {
+            ret.append(normIdenTree());
+        } else {
+            ret.append("<identifier> ").append(className).append(" </identifier>\n");
+            currentToken++;
+        }
 
         scopeVars.downScope();
         ret.append(parameterListTree()); // advances past final )
@@ -145,7 +165,11 @@ public class TreeBuilder {
         if (hasReturn && !tokens[currentToken].equals("}")) {
             throw new SyntaxException(tokens, currentToken, "Unreachable statement.");
         }
-        if (!(hasReturn || parent.getMethods().get(currentMethod)[0].equals("void"))) {
+        if (hasReturn && parent.getMethods().get(className + "$" + currentMethod)[0].equals(className)) {
+            throw new SyntaxException(tokens,currentToken, "Constructors should not have a return statement.");
+        }
+        if (!(hasReturn || parent.getMethods().get(className + "$" + currentMethod)[0].equals("void")
+            || parent.getMethods().get(className + "$" + currentMethod)[0].equals(className))) {
             throw new SyntaxException(tokens, currentToken, "Return statement required.");
         }
 
@@ -213,7 +237,7 @@ public class TreeBuilder {
                 if (tokens[currentToken+1].equals("=")) {
                     return assignmentTree();
                 }
-                int i = currentToken;
+                int i = currentToken + 1;
                 while (!tokens[i].equals("]")) {
                     i++;
                 }
@@ -323,7 +347,7 @@ public class TreeBuilder {
         }
         StringBuilder ret = new StringBuilder("<returnStatement>\n<keyword> return </keyword>\n");
         currentToken++;
-        //ret.append(expressionTree(parent.getMethods().get(currentMethod)));
+        //ret.append(expressionTree(parent.getMethods().get(className + "$" + currentMethod)));
         currentToken++;
         if (!tokens[currentToken].equals(";")) {
             throw new SyntaxException(tokens, currentToken, "; expected.");
@@ -390,6 +414,9 @@ public class TreeBuilder {
         ret.append(normIdenTree());
 
         if (tokens[currentToken].equals("[")) {
+            if (!type.substring(type.length()-2).equals("[]")) {
+                throw new SyntaxException(tokens, currentToken, tokens[currentToken - 1] + " is not an array.");
+            }
             ret.append("<symbol> [ </symbol>\n");
             currentToken++;
             //ret.append(expressionTree("int"));
@@ -411,6 +438,7 @@ public class TreeBuilder {
             throw new SyntaxException(tokens, currentToken, "; expected.");
         }
         ret.append("<symbol> ; </symbol>\n");
+        currentToken++;
 
         ret.append("</assignment>\n");
         return ret.toString();

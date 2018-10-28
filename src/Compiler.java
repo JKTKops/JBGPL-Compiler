@@ -30,6 +30,7 @@ public class Compiler {
                 classes.add(token[j]);
                 j++;
                 // also get that class from the OS files and copy it into this dir
+                // String, Array, and Memory are defaults?
             }
             findMethods(token);
         }
@@ -66,9 +67,38 @@ public class Compiler {
     }
 
     private void findMethods(String[] tokens) throws SyntaxException {
+        int a = 0;
+        while (!tokens[a].equals("class")) {
+            a++;
+        }
+        String currentClass = tokens[++a];
+
         for (int i = 0; i < tokens.length - 2; i++) {
             if (tokens[i + 2].equals("(")) {
-                if (tokens[i + 1].matches("[a-z][_A-Za-z0-9]*")) {
+                if (tokens[i + 1].equals(currentClass)) {
+                    if (classes.contains(tokens[i+1]) && !tokens[i].equals("new")) {
+                        ArrayList<String> types = new ArrayList<>();
+                        if (methodTypes.containsKey(currentClass + "$" + tokens[i+1])) {
+                            throw new SyntaxException(tokens, i + 1, "Constructors cannot be overloaded.");
+                        }
+                        types.add(tokens[i+1]);
+                        int j = i+3;
+                        while (!tokens[j].equals(")")) {
+                            if (tokens[j+1].equals("[") && tokens[j+2].equals("]")) {
+                                types.add(tokens[j] + "[]");
+                                j += 4;
+                            } else {
+                                types.add(tokens[j]);
+                                j += 2;
+                            }
+                            if (tokens[j].equals(",")) {
+                                j++;
+                            }
+                        }
+                        methodTypes.put(currentClass + "$" + tokens[i+1], types.toArray(new String[0]));
+                        i = j+1;
+                    }
+                } else if (tokens[i + 1].matches("[a-z][_A-Za-z0-9]*")) {
                     ArrayList<String> types = new ArrayList<>();
                     if (classes.contains(tokens[i])) {
                         if (methodTypes.containsKey(tokens[i + 1])) {
@@ -88,7 +118,7 @@ public class Compiler {
                                 j++;
                             }
                         }
-                        methodTypes.put(tokens[i+1], types.toArray(new String[0]));
+                        methodTypes.put(currentClass + "$" + tokens[i+1], types.toArray(new String[0]));
                         i = j+1;
                     } else {
                         switch (tokens[i]) {
@@ -108,7 +138,7 @@ public class Compiler {
                                         j++;
                                     }
                                 }
-                                methodTypes.put(tokens[i+1], types.toArray(new String[0]));
+                                methodTypes.put(currentClass + "$" + tokens[i+1], types.toArray(new String[0]));
                                 i = j+1;
                                 break;
                             default:
