@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+/** deprecated */
 public class Compiler {
     private HashMap<String, String[]> methodTypes = new HashMap<>();
     private ArrayList<String> classes;

@@ -1,10 +1,11 @@
 import java.util.HashMap;
 
+/** deprecated */
 class VarStack {
     private Node topNode;
 
     VarStack() {
-        topNode = new Node();
+        topNode = new Node(null);
     }
 
     void downScope() {
@@ -70,11 +71,6 @@ class VarStack {
     private class Node {
         private HashMap<String, String> localVars;
         private Node nextNode;
-
-        Node() {
-            localVars = new HashMap<>();
-            nextNode = null;
-        }
 
         private Node(Node next) {
             localVars = new HashMap<>();

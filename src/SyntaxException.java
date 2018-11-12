@@ -1,3 +1,4 @@
+/** deprecated */
 public class SyntaxException extends Throwable {
     private String error;
 

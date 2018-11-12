@@ -1,3 +1,4 @@
+/** deprecated */
 public class TreeBuilder {
     private Compiler parent;
     private String className = "";
@@ -141,7 +142,6 @@ public class TreeBuilder {
         if (!constructor) {
             ret.append(normIdenTree());
         } else {
-            ret.append("<identifier> ").append(className).append(" </identifier>\n");
             currentToken++;
         }
 
@@ -257,9 +257,7 @@ public class TreeBuilder {
         throw new SyntaxException(tokens, currentToken, "Not a Statement.");
     }
 
-    /** token initially expects 'while'
-     * Note there is indirect recursion between this method and statementTree
-     */
+    /** token initially expects 'while' */
     private String whileTree() throws SyntaxException {
         StringBuilder ret = new StringBuilder("<whileStatement>\n<keyword> while </keyword>\n");
         currentToken++;
@@ -319,6 +317,7 @@ public class TreeBuilder {
         ret.append("<symbol> ) </symbol>\n");
         currentToken++;
         ret.append(blockBodyTree());
+
         return ret.toString();
     }
 
