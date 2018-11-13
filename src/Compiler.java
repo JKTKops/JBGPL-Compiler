@@ -152,7 +152,7 @@ public class Compiler {
     }
 
     public static void main(String[] args) {
-        String dirPath = "C:/Users/zergl/IdeaProjects/JBGPL Compiler/src/files/Jack Files/Test";
+        String dirPath = "src/files/Jack Files/Test";
         String out = "";
         try {
             Compiler compiler = new Compiler(dirPath);

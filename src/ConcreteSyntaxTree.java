@@ -2,12 +2,19 @@ import java.util.ArrayList;
 
 public class ConcreteSyntaxTree {
     /** Represents the ε production. */
-    private final TerminalSymbol EPSILON = new TerminalSymbol("ε");
+    public static final TerminalSymbol EPSILON = new TerminalSymbol("ε");
 
     private NonterminalSymbol root;
 
+    public ConcreteSyntaxTree() {
+        root = new NonterminalSymbol("Start");
+    }
 
-    private abstract class Symbol {
+    public NonterminalSymbol getRoot() {
+        return root;
+    }
+
+    abstract static class Symbol {
         String symbol;
 
         Symbol(String symbol) {
@@ -19,13 +26,13 @@ public class ConcreteSyntaxTree {
         }
     }
 
-    private class TerminalSymbol extends Symbol {
+    static class TerminalSymbol extends Symbol {
         TerminalSymbol(String symbol) {
             super(symbol);
         }
     }
 
-    private class NonterminalSymbol extends Symbol {
+    static class NonterminalSymbol extends Symbol {
         private ArrayList<Symbol> children;
 
         NonterminalSymbol(String symbol) {
